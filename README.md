@@ -8,12 +8,12 @@
 |Student ID|101056037|101035484|101038546|
 |E-mail|jiahegeng@cmail.carleton.ca|yuhuachen@cmail.carleton.ca|jiachengtang@cmail.carleton.ca|
 
-###Notice:
+### Notice:
 Befor you execute `.py`, please 
 make sure that the file path in the code is correct
 and the environment is correct. 
 
-###Library:
+### Library:
 |||
 |:---|:---|
 |numpy|1.18.1
