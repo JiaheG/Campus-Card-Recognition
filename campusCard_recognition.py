@@ -699,4 +699,4 @@ window = tk.Tk()
 mainwindow()
 
 
-
+# reference: https://www.pyimagesearch.com/2017/07/17/credit-card-ocr-with-opencv-and-python/#download-the-code
