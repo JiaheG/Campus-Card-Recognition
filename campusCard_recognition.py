@@ -19,8 +19,7 @@ def idRecognition():
     ref = cv2.cvtColor(ref, cv2.COLOR_BGR2GRAY)
     ref = cv2.threshold(ref, 10, 255, cv2.THRESH_BINARY_INV)[1]
 
-    # find contours
-    # sort them from left to right, and initialize a dictionary to map digit name
+    # find contours and sort them from left to right
     refCnts = cv2.findContours(ref.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     refCnts = imutils.grab_contours(refCnts)
     refCnts = contours.sort_contours(refCnts, method="left-to-right")[0]
@@ -45,11 +44,15 @@ def idRecognition():
     image = imutils.resize(image, width=600)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     gray_num = gray[340:372, 75:240]
+    # sharpen the image
+    kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
+    gray_num = cv2.filter2D(gray_num, -1, kernel)
 
-    # apply a tophat (whitehat) morphological operator to find light regions against a dark background
+    # apply a tophatmorphological operator to find light regions against a dark background
     tophat = cv2.morphologyEx(gray, cv2.MORPH_TOPHAT, rectKernel)
 
-    # compute the gradient of the tophat image, then scal the rest
+    # compute the Scharr gradient of the tophat image, then scale
+
     gradX = cv2.Sobel(tophat, ddepth=cv2.CV_32F, dx=1, dy=0, ksize=-1)
     gradX_num = gradX[340:372, 75:240]
 
@@ -58,36 +61,36 @@ def idRecognition():
     gradX_num = (255 * ((gradX_num - minVal) / (maxVal - minVal)))
     gradX_num = gradX_num.astype("uint8")
 
-    # apply a closing operation using the rectangular kernel
+    # apply a closing operation using the rectangular kernel then apply Otsu's thresholding method
     gradX_num = cv2.morphologyEx(gradX_num, cv2.MORPH_CLOSE, rectKernel)
     thresh = cv2.threshold(gradX_num, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 
+    # apply a second closing operation to the binary image
     thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, sqKernel)
 
-    # find contours in the thresholded image, then initialize the
-    # list of digit locations
+    # find contours in the thresholded image
     cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
     (x, y, w, h) = cv2.boundingRect(cnts[0])
+
 
     output = []
 
     groupOutput = []
 
-    # extract digits from the grayscale image, then apply thresholding to segment the digits from the background
-
+    # extract the digits from the grayscale image,
+    # then apply thresholding to segment the digits from the background
+    # group = gray_num[y - 5:y + h + 5, x - 5:x + w + 5]
     kernel = np.ones((2, 2), np.uint8)
     gray_num = cv2.erode(gray_num, kernel, iterations=1)
     group = cv2.threshold(gray_num, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
 
-    # detect the contours of each individual digit in the group,  then sort the digit contours from left to right
+    # detect the contours of each individual digit in the group, then sort the digit contours from left to right
     digitCnts = cv2.findContours(group.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     digitCnts = imutils.grab_contours(digitCnts)
     digitCnts = contours.sort_contours(digitCnts, method="left-to-right")[0]
 
     for c in digitCnts:
-        # compute the bounding box of the individual digit, extract
-        # the digit, and resize it
         (x, y, w, h) = cv2.boundingRect(c)
         if ((w * h) > 700 or (w * h) < 50):
             continue
@@ -97,14 +100,16 @@ def idRecognition():
         # initialize a list of template matching scores
         scores = []
 
-        # loop over the reference digit name and digit ROI
+        # loop over the reference digit
         for (digit, digitROI) in digits.items():
             # apply correlation-based template matching, take the score, and update the scores list
             result = cv2.matchTemplate(roi, digitROI, cv2.TM_CCOEFF_NORMED)
             (_, score, _, _) = cv2.minMaxLoc(result)
+            # print(score)
             scores.append(score)
 
-        # the classification for the digit will be the reference digit name with the *largest* template matching score
+        # the classification for the digit will be the reference
+        # digit name with the largest matching score
 
         groupOutput.append(str(np.argmax(scores)))
 
@@ -112,7 +117,7 @@ def idRecognition():
     cv2.rectangle(image, (75, 343), (225, 371), (0, 0, 255), 2)
     cv2.putText(image, "".join(groupOutput), (236, 350), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
 
-    # update the output digits list
+
     output.extend(groupOutput)
     if(len(output)!=9):
         print("Failed to recognize the student number, please try again!")
@@ -121,12 +126,14 @@ def idRecognition():
     stuNum = output
     print("out",output)
     print("stuNum", stuNum)
-    gettable(stuNum)
+    stuNum1 = "".join(stuNum)
+    gettable(stuNum1)
     cv2.imshow("test", image)
     p = cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-    # display the output credit card information to the screen
+    # display the output
+    # print("Credit Card Type: {}".format(FIRST_NUMBER[output[0]]))
     print("Credit Card #: {}".format("".join(output)))
     return output
 
@@ -171,10 +178,10 @@ def featureMatching(cardImage):
     ref = cv2.imread('ref3.png')
     ref_gray = cv2.cvtColor(ref, cv2.COLOR_BGR2GRAY)
     card = copy.copy(cardImage)
-
+    # card = cv2.imread('card3.jpg')
     card_gray = cv2.cvtColor(card, cv2.COLOR_BGR2GRAY)
-    ref2 = cv2.imread('ref2.png')
-    ref2_gray = cv2.cvtColor(ref2, cv2.COLOR_BGR2GRAY)
+    #ref2 = cv2.imread('ref2.png')
+    #ref2_gray = cv2.cvtColor(ref2, cv2.COLOR_BGR2GRAY)
     surf = cv2.xfeatures2d.SURF_create(400)
     kp1, des1 = surf.detectAndCompute(card, None)
     kp2, des2 = surf.detectAndCompute(ref, None)
@@ -216,11 +223,81 @@ def selectFile():
     featureMatching(card)
 
 def gettable(output):
+    def add1():
+        def add_to_database():
+            sid = output
+            fname = new_fname.get()
+            lname = new_lname.get()
+            dept_name = new_dept.get()
+            tot_cred = new_tot_crd.get()
+
+            conn = pymysql.connect(
+                host="127.0.0.1",
+                port=3306,
+                user="root",
+                password="12345678",
+                database="student_info",
+
+                charset="utf8"
+            )
+            cursor = conn.cursor()
+            ret = cursor.execute("SELECT * FROM student")
+            results = cursor.fetchall()
+            for row in results:
+                if (row[0] == sid):
+                    messagebox.showinfo('warning', 'Student exist')
+                    cursor.close()
+                    conn.close()
+                    window_adding.destroy()
+                    return
+
+            insert_sql = "INSERT INTO student (id, firstname, lastname, dept_name, tot_cred) VALUES ('%s','%s','%s','%s','%s');" % (
+            sid, fname, lname, dept_name, tot_cred)
+            cursor.execute(insert_sql)
+            conn.commit()
+            messagebox.showinfo('success!', 'Successful adding: \nStudent id:%s\nFirst name:%s\nLast Name: %s'
+                                            '\nDepartment Name: %s\nTotal Credit: %s\n' % (
+                                    sid, fname, lname, dept_name, tot_cred))
+            cursor.close()
+            conn.close()
+            window_adding.destroy()
+
+        window_adding = tk.Toplevel(window)
+        window_adding.geometry('400x250+500+500')
+        window_adding.title('Add student')
+
+        tk.Label(window_adding, text='please enter the student information:').place(x=10, y=10)
+
+        tk.Label(window_adding, text='student id').place(x=10, y=40)
+        tk.Label(window_adding, text=output).place(x=150, y=40)
+
+        new_fname = tk.StringVar()
+        tk.Label(window_adding, text='first name').place(x=10, y=70)
+        enter_new_fname = tk.Entry(window_adding, textvariable=new_fname)
+        enter_new_fname.place(x=150, y=70)
+
+        new_lname = tk.StringVar()
+        tk.Label(window_adding, text='last name').place(x=10, y=100)
+        enter_new_lname = tk.Entry(window_adding, textvariable=new_lname)
+        enter_new_lname.place(x=150, y=100)
+
+        new_dept = tk.StringVar()
+        tk.Label(window_adding, text='department name').place(x=10, y=130)
+        enter_new_dept = tk.Entry(window_adding, textvariable=new_dept)
+        enter_new_dept.place(x=150, y=130)
+
+        new_tot_crd = tk.StringVar()
+        tk.Label(window_adding, text='total credit').place(x=10, y=160)
+        enter_new_tot_crd = tk.Entry(window_adding, textvariable=new_tot_crd)
+        enter_new_tot_crd.place(x=150, y=160)
+
+        btn_comfirm = tk.Button(window_adding, text='comfirm', command=add_to_database)
+        btn_comfirm.place(x=150, y=200)
     conn = pymysql.connect(
         host="127.0.0.1",
         port=3306,
         user="root",
-        password="jasper980906",
+        password="12345678",
         database="student_info",
 
         charset="utf8"
@@ -228,22 +305,128 @@ def gettable(output):
     cursor = conn.cursor()
     ret = cursor.execute("SELECT * FROM student")
     results = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    output = "".join(output)
+
     print("results",results)
     for row in results:
-        if(row[0] == output):
-            print("row", row[0])
-            print("output", output)
+        if(int(row[0]) == int(output)):
             sid = row[0]
             fname = row[1]
             lname = row[2]
             dept_name = row[3]
             tot_cred = row[4]
-    messagebox.showinfo('Student Info', 'Student id:%s\nFirst name:%s\nLast Name: %s'
-                                        '\nDepartment Name: %s\nTotal Credit: %s\n' % (
-                        sid, fname, lname, dept_name, tot_cred))
+            upload_ui(sid,fname,lname,dept_name,tot_cred)
+            return
+    a = tk.messagebox.askokcancel('warnning', 'student(%s) not exist\nDo you want add to the database? ' % (output))
+    if(a):
+        add1()
+
+def upload_ui(sid, fname, lname, dept_name, tot_cred):
+    def update1():
+        def add_to_database():
+            fname = new_fname.get()
+            lname = new_lname.get()
+            dept_name = new_dept.get()
+            tot_cred = new_tot_crd.get()
+
+            conn = pymysql.connect(
+                host="127.0.0.1",
+                port=3306,
+                user="root",
+                password="12345678",
+                database="student_info",
+
+                charset="utf8"
+            )
+            cursor = conn.cursor()
+
+            insert_sql = "UPDATE student SET firstname = '%s', lastname = '%s', dept_name = '%s', tot_cred = '%s' WHERE (id = '%s');" % (
+            fname, lname, dept_name, tot_cred, sid)  # 执行sql语句
+            cursor.execute(insert_sql)
+            conn.commit()
+            messagebox.showinfo('success!', 'Successful update: \nStudent id:%s\nFirst name:%s\nLast Name: %s'
+                                            '\nDepartment Name: %s\nTotal Credit: %s\n' % (
+                                    sid, fname, lname, dept_name, tot_cred))
+            cursor.close()
+            conn.close()
+            window_adding.destroy()
+
+        window_adding = tk.Toplevel(window)
+        window_adding.geometry('400x250+500+500')
+        window_adding.title('Add student')
+
+        tk.Label(window_adding, text='please enter the student information:').place(x=10, y=10)
+
+        tk.Label(window_adding, text='student id').place(x=10, y=40)
+        tk.Label(window_adding, text=sid).place(x=150, y=40)
+
+        new_fname = tk.StringVar()
+        tk.Label(window_adding, text='first name').place(x=10, y=70)
+        enter_new_fname = tk.Entry(window_adding, textvariable=new_fname)
+        enter_new_fname.place(x=150, y=70)
+
+        new_lname = tk.StringVar()
+        tk.Label(window_adding, text='last name').place(x=10, y=100)
+        enter_new_lname = tk.Entry(window_adding, textvariable=new_lname)
+        enter_new_lname.place(x=150, y=100)
+
+        new_dept = tk.StringVar()
+        tk.Label(window_adding, text='department name').place(x=10, y=130)
+        enter_new_dept = tk.Entry(window_adding, textvariable=new_dept)
+        enter_new_dept.place(x=150, y=130)
+
+        new_tot_crd = tk.StringVar()
+        tk.Label(window_adding, text='total credit').place(x=10, y=160)
+        enter_new_tot_crd = tk.Entry(window_adding, textvariable=new_tot_crd)
+        enter_new_tot_crd.place(x=150, y=160)
+
+        btn_comfirm = tk.Button(window_adding, text='comfirm', command=add_to_database)
+        btn_comfirm.place(x=150, y=200)
+    def delete1():
+        a = tk.messagebox.askokcancel('warnning', 'Are you sure you want to delete student(%s)? ' % (sid))
+        if (a == True):
+            conn = pymysql.connect(
+                host="127.0.0.1",
+                port=3306,
+                user="root",
+                password="12345678",
+                database="student_info",
+
+                charset="utf8"
+            )
+            cursor = conn.cursor()
+            insert_sql = "DELETE FROM student WHERE (id = '" + sid + "');"
+            cursor.execute(insert_sql)
+            conn.commit()
+
+            messagebox.showinfo('success!', 'Delete successful')
+            cursor.close()
+            conn.close()
+    window_adding = tk.Toplevel(window)
+    window_adding.geometry('400x250+500+500')
+    window_adding.title('Info')
+
+    tk.Label(window_adding, text='Student Information:').place(x=20, y=25)
+
+    tk.Label(window_adding, text='student id:').place(x=10+30, y=60)
+    tk.Label(window_adding, text=sid).place(x=90+30, y=60)
+
+    tk.Label(window_adding, text='first name:').place(x=10+30, y=90)
+    tk.Label(window_adding, text=fname).place(x=90+30, y=90)
+
+    tk.Label(window_adding, text='last name:').place(x=10+30, y=120)
+    tk.Label(window_adding, text=lname).place(x=90+30, y=120)
+
+    tk.Label(window_adding, text='dept. name:').place(x=10+30, y=150)
+    tk.Label(window_adding, text=dept_name).place(x=90+30, y=150)
+
+    tk.Label(window_adding, text='total credit:').place(x=10+30, y=180)
+    tk.Label(window_adding, text=tot_cred).place(x=90+30, y=180)
+
+    btn_comfirm = tk.Button(window_adding, text='update', command=update1)
+    btn_comfirm.place(x=260, y=135)
+
+    btn_comfirm = tk.Button(window_adding, text='delete', command=delete1)
+    btn_comfirm.place(x=260, y=75)
 
 def add():
     def add_to_database():
@@ -257,7 +440,7 @@ def add():
             host="127.0.0.1",
             port=3306,
             user="root",
-            password="jasper980906",
+            password="12345678",
             database="student_info",
 
             charset="utf8"
@@ -327,7 +510,7 @@ def delete():
                 host="127.0.0.1",
                 port=3306,
                 user="root",
-                password="jasper980906",
+                password="12345678",
                 database="student_info",
 
                 charset="utf8"
@@ -376,7 +559,7 @@ def enter_info(new_id):
             host="127.0.0.1",
             port=3306,
             user="root",
-            password="jasper980906",
+            password="12345678",
             database="student_info",
 
             charset="utf8"
@@ -433,7 +616,7 @@ def update():
                 host="127.0.0.1",
                 port=3306,
                 user="root",
-                password="jasper980906",
+                password="12345678",
                 database="student_info",
 
                 charset="utf8"
@@ -467,46 +650,53 @@ def update():
     btn_comfirm = tk.Button(window_delete, text='comfirm', command=delete_from_database)
     btn_comfirm.place(x=150, y=150)
 
+def mainwindow():
+    # window = tk.Tk()
+    window.title("Campus Card Recognition System")
+    window.geometry("400x250+500+500")
+    L1 = tk.Label(window,text="Take a photo of your campus card: ")
+    L1.place(x=20, y=50)
+    L1.pack()
+    b = tk.Button(window,text="Turn on your camera",command=imageCapture)
+    b.place(x=300, y=50)
+    b.pack()
+    L1 = tk.Label(window,text="Select a local photo: ")
+    L1.place(x=20, y=100)
+    L1.pack()
+
+    b1 = tk.Button(window,text="upload",command=selectFile)
+    b1.place(x=300, y=100)
+    b1.pack()
+
+    L2 = tk.Label(window,text="Add student info.: ")
+    L2.place(x=20, y=150)
+    L2.pack()
+    b2 = tk.Button(window,text="Add",command=add)
+    b2.place(x=300, y=150)
+    b2.pack()
+
+    L2 = tk.Label(window,text="Delete student info.: ")
+    L2.place(x=20, y=150)
+    L2.pack()
+    b3 = tk.Button(window,text="Delete",command=delete)
+    b3.place(x=300, y=150)
+    b3.pack()
+
+    L2 = tk.Label(window,text="Update student info.: ")
+    L2.place(x=20, y=150)
+    L2.pack()
+    b4 = tk.Button(window,text="Update",command=update)
+    b4.place(x=300, y=150)
+    b4.pack()
+
+    # b5 = tk.Button(window, text="test", command=gettable)
+    # b5.place(x=100, y=150)
+    # b5.pack()
+
+    window.mainloop()
+
 window = tk.Tk()
-
-window.title("Campus Card Recognition System")
-window.geometry("400x250+500+500")
-L1 = tk.Label(window,text="Take a photo of your campus card: ")
-L1.place(x=20, y=50)
-L1.pack()
-b = tk.Button(window,text="Turn on your camera",command=imageCapture)
-b.place(x=300, y=50)
-b.pack()
-L1 = tk.Label(window,text="Select a local photo: ")
-L1.place(x=20, y=100)
-L1.pack()
-
-b1 = tk.Button(window,text="upload",command=selectFile)
-b1.place(x=300, y=100)
-b1.pack()
-
-L2 = tk.Label(window,text="Add student info.: ")
-L2.place(x=20, y=150)
-L2.pack()
-b2 = tk.Button(window,text="Add",command=add)
-b2.place(x=300, y=150)
-b2.pack()
-
-L2 = tk.Label(window,text="Delete student info.: ")
-L2.place(x=20, y=150)
-L2.pack()
-b3 = tk.Button(window,text="Delete",command=delete)
-b3.place(x=300, y=150)
-b3.pack()
-
-L2 = tk.Label(window,text="Update student info.: ")
-L2.place(x=20, y=150)
-L2.pack()
-b4 = tk.Button(window,text="Update",command=update)
-b4.place(x=300, y=150)
-b4.pack()
-
-window.mainloop()
+mainwindow()
 
 
 
