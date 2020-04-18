@@ -1,19 +1,18 @@
-# Campus-Card-Recognition(COMP 4102 Final Project)
-
+# COMP 4102 Final Project
 -----------
 
-|||||
+|||
 |:---|:---|:---|:---|
-|Name|Jiahe Geng | Yuhua Chen | Jiacheng Tang|
-|Student ID|101056037|101035484|101038546|
-|E-mail|jiahegeng@cmail.carleton.ca|yuhuachen@cmail.carleton.ca|jiachengtang@cmail.carleton.ca|
+|Name|Jiahe Geng | Yuhua Chen | Jiacheng Tang
+|Student ID|101056037|101035484|101038546
+|E-mail|jiahegeng@cmail.carleton.ca|yuhuachen@cmail.carleton.ca|jiachengtang@cmail.carleton.ca
 
-### Notice:
+###Notice:
 Befor you execute `.py`, please 
 make sure that the file path in the code is correct
 and the environment is correct. 
 
-### Library:
+###Library:
 |||
 |:---|:---|
 |numpy|1.18.1
@@ -27,6 +26,7 @@ and the environment is correct.
 ### Files:
 * `campusCard_recognition.py` files is the main program, cannot run with Pycharm (can work on console or Terminal)
 * `student_info_student` file is database
+* `card 1 - card4` example image for testing
 
 ### Instruction:
 - Background:
@@ -63,7 +63,7 @@ Before using PyMySQL, we need to ensure that PyMySQL is installed.
 - Lanuch the main program:
 1. Make sure you have install required libraries
 2. Use command "python3 campusCard_recognition.py" to launch the program
-    1. For detect student by using computer's front camera, press the button "Turn on your camera", and place the student card in the GREEN rectangle.
+    1. For detect student by using computer's front camera, press the button "Turn on your camera", and place the student card in the GREEN rectangle. PRESS "q" to take the photo
     (Due to resolution of front camera, the performance of recognition using front camera have lower accuracy and might require take photos for several times)
     2. For detect student by using local image, press the button "Upload". Try to upload the image that take from phone's camera which has higher resolution or use attached example images.
     3. To close the result image, do not click red cross in the top left, press any keystroke to close that window. 
