@@ -1,11 +1,11 @@
 # COMP 4102 Final Project
 -----------
 
-|||
+|||||
 |:---|:---|:---|:---|
-|Name|Jiahe Geng | Yuhua Chen | Jiacheng Tang
-|Student ID|101056037|101035484|101038546
-|E-mail|jiahegeng@cmail.carleton.ca|yuhuachen@cmail.carleton.ca|jiachengtang@cmail.carleton.ca
+|Name|Jiahe Geng | Yuhua Chen | Jiacheng Tang|
+|Student ID|101056037|101035484|101038546|
+|E-mail|jiahegeng@cmail.carleton.ca|yuhuachen@cmail.carleton.ca|jiachengtang@cmail.carleton.ca|
 
 ###Notice:
 Befor you execute `.py`, please 
